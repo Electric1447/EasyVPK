@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 2.8)
 
 ## This includes the Vita toolchain, must go before project definition
-# It is a convenience so you do not have to type 
-# -DCMAKE_TOOLCHAIN_FILE=$VITASDK/share/vita.toolchain.cmake for cmake. It is 
+# It is a convenience so you do not have to type
+# -DCMAKE_TOOLCHAIN_FILE=$VITASDK/share/vita.toolchain.cmake for cmake. It is
 # highly recommended that you include this block for all projects.
 if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
 	if(DEFINED ENV{VITASDK})
@@ -92,22 +92,22 @@ target_link_libraries(easyvpk
 	z
 	m
 	c
-	ScePgf_stub 
+	ScePgf_stub
 	SceGxm_stub
-	SceSqlite_stub 
+	SceSqlite_stub
 	SceCtrl_stub
 	SceNet_stub
 	SceNetCtl_stub
 	SceAppUtil_stub
 	SceAppMgr_stub
-	ScePromoterUtil_stub 
+	ScePromoterUtil_stub
 	SceSsl_stub
 	SceIofilemgr_stub
 	SceHttp_stub
 	SceIme_stub
 	ScePower_stub
 	SceSysmodule_stub
-	SceShellSvc_stub 
+	SceShellSvc_stub
 	SceDisplay_stub
 	SceCommonDialog_stub
 	SceLibKernel_stub
@@ -119,6 +119,7 @@ vita_create_vpk(easyvpk.vpk ${VITA_TITLEID} easyvpk.self
 	VERSION ${VITA_VERSION}
 	NAME ${VITA_APP_NAME}
 	FILE sce_sys/icon0.png sce_sys/icon0.png
+	FILE sce_sys/pic0.png sce_sys/pic0.png
 	FILE sce_sys/livearea/contents/bg.png sce_sys/livearea/contents/bg.png
 	FILE sce_sys/livearea/contents/startup.png sce_sys/livearea/contents/startup.png
 	FILE sce_sys/livearea/contents/template.xml sce_sys/livearea/contents/template.xml
