@@ -199,11 +199,11 @@ int makeHeadBin() {
 
 VitaPackage::VitaPackage(const std::string vpk) : vpk_(vpk) {
 
-	uint32_t ptr[0x100] = { 0 };
-	ptr[0] = 0;
-	ptr[1] = (uint32_t)&ptr[0];
+	SceSysmoduleOpt opt;
+	opt.flags = 0;
+	opt.result = (int *)&opt.flags;
 	uint32_t scepaf_argp[] = { 0x400000, 0xEA60, 0x40000, 0, 0 };
-	sceSysmoduleLoadModuleInternalWithArg(SCE_SYSMODULE_INTERNAL_PAF, sizeof(scepaf_argp), scepaf_argp, ptr);
+	sceSysmoduleLoadModuleInternalWithArg(SCE_SYSMODULE_INTERNAL_PAF, sizeof(scepaf_argp), scepaf_argp, &opt);
 
 	sceSysmoduleLoadModuleInternal(SCE_SYSMODULE_INTERNAL_PROMOTER_UTIL);
 	scePromoterUtilityInit();
@@ -270,11 +270,11 @@ bool isPackageInstalled(std::string titleid) {
 	// FIXME Don't reload the module every time
 
 	// ScePaf is required for PromoterUtil
-	uint32_t ptr[0x100] = {0};
-	ptr[0] = 0;
-	ptr[1] = (uint32_t)&ptr[0];
+	SceSysmoduleOpt opt;
+	opt.flags = 0;
+	opt.result = (int *)&opt.flags;
 	uint32_t scepaf_argp[] = {0x400000, 0xEA60, 0x40000, 0, 0};
-	sceSysmoduleLoadModuleInternalWithArg(SCE_SYSMODULE_INTERNAL_PAF, sizeof(scepaf_argp), scepaf_argp, ptr);
+	sceSysmoduleLoadModuleInternalWithArg(SCE_SYSMODULE_INTERNAL_PAF, sizeof(scepaf_argp), scepaf_argp, &opt);
 
 	sceSysmoduleLoadModuleInternal(SCE_SYSMODULE_INTERNAL_PROMOTER_UTIL);
 
