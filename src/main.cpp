@@ -39,6 +39,7 @@ int main() {
 	initSceAppUtil();
 	vita2d_init();
 
+	Filesystem::removePath("ux0:data/Easy_VPK");
 	Filesystem::mkDir("ux0:data/Easy_VPK");
 
 	vita2d_set_clear_color(WHITE);
@@ -71,7 +72,7 @@ int main() {
 		if (pad.buttons != SCE_CTRL_SQUARE) sharedData.blockSquare = false;
 		if (pad.buttons != SCE_CTRL_CIRCLE) sharedData.blockCircle = false;
 		if (pad.buttons != SCE_CTRL_START ) sharedData.blockStart  = false;
-		
+
 		if (sharedData.scene == 0) listView.draw(sharedData, pad.buttons);
 		if (sharedData.scene == 1) detailsView.draw(sharedData, pad.buttons);
 		if (sharedData.scene == 2) popupView.draw(sharedData);
