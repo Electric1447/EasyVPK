@@ -11,7 +11,10 @@ Prerequisites:
 
 Compiling:
 ```
-cmake .
+mkdir build
+cd build
+
+cmake ..
 make
 ```
 
