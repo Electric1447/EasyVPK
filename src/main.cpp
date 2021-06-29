@@ -5,14 +5,17 @@
 #include <psp2/apputil.h>
 #include <psp2/display.h>
 #include <psp2/ime_dialog.h>
+#include <psp2/appmgr.h>
+#include <psp2/promoterutil.h>
 
 #include "net/download.hpp"
 #include "utils/filesystem.hpp"
 #include "utils/search.hpp"
+#include "utils/vitaPackage.h"
 
 #include "screens/list.hpp"
 #include "screens/details.hpp"
-#include "screens/popup.hpp"
+#include "screens/installer.hpp"
 
 
 SceCtrlData pad;
@@ -37,28 +40,35 @@ void initSceAppUtil() {
 
 int main() {
 	initSceAppUtil();
-	vita2d_init();
+	
+    // remove updater app if installed
+    { // extra scope needed to cause VitaPackage cleanup procedure
+        auto updaterPkg = InstalledVitaPackage(UPDATER_TITLEID);
+        if (updaterPkg.IsInstalled())
+            updaterPkg.Uninstall();
+    }
 
+	vita2d_init();
+	
+	SharedData sharedData;
+
+	Filesystem::removePath(std::string(PACKAGE_TEMP_FOLDER));
 	Filesystem::removePath("ux0:data/Easy_VPK");
 	Filesystem::mkDir("ux0:data/Easy_VPK");
+	Filesystem::mkDir(sharedData.vpkDownloadPath);
 
 	vita2d_set_clear_color(WHITE);
-
-	vita2d_texture *bgIMG = vita2d_load_PNG_file("ux0:app/ESVPK0009/resources/bg.png");
+	vita2d_texture *bgIMG = vita2d_load_PNG_file("ux0:app/" VITA_TITLEID "/resources/bg.png");
 
 	httpInit();
 	netInit();
 	curlDownload(HOMEBREW_URL, "ux0:data/Easy_VPK/vpks.json");
-
-	SharedData sharedData;
-
-	Filesystem::mkDir(sharedData.vpkDownloadPath);
-
+	
 	sharedData.vpks = json::parse(Filesystem::readFile("ux0:data/Easy_VPK/vpks.json"));
 	sharedData.original = sharedData.vpks;
 
 	List listView;
-	Popup popupView;
+	Installer installerView;
 	Details detailsView;
 
 	while(1) {
@@ -75,7 +85,7 @@ int main() {
 
 		if (sharedData.scene == 0) listView.draw(sharedData, pad.buttons);
 		if (sharedData.scene == 1) detailsView.draw(sharedData, pad.buttons);
-		if (sharedData.scene == 2) popupView.draw(sharedData);
+		if (sharedData.scene == 2) installerView.draw(sharedData);
 
 		vita2d_end_drawing();
 		vita2d_common_dialog_update();

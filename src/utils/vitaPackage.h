@@ -8,9 +8,6 @@
 	#define PACKAGE_TEMP_FOLDER "ux0:/temp/pkg/"
 #endif
 
-#define ntohl __builtin_bswap32
-#define SFO_MAGIC 0x46535000
-
 
 class VitaPackage{
 public:
@@ -27,7 +24,7 @@ private:
 
 class UpdaterPackage : private VitaPackage {
 public:
-	UpdaterPackage() : VitaPackage("EasyVPKUpdater") {};
+	UpdaterPackage() : VitaPackage("easyvpk_updater") {};
 
 	int InstallUpdater();
 };
@@ -45,6 +42,7 @@ public:
 	explicit InstalledVitaPackage(std::string title_id) : VitaPackage(""), title_id(std::move(title_id)) {}
 
 	bool IsInstalled();
+
 	int Uninstall();
 
 private:
@@ -53,4 +51,3 @@ private:
 
 bool isPackageInstalled(std::string titleid);
 void openApp(std::string titleid);
-

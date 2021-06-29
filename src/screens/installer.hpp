@@ -19,7 +19,7 @@
 #define ERROR       6
 
 
-class Popup {
+class Installer {
 	public:
 		void draw(SharedData &sharedData);
 		void reset();

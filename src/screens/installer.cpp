@@ -1,11 +1,11 @@
 /*
- * Copyright (c) 2015 Sergi Granell (xerpi)
- * Copyright (c) 2020 Itai Levin (Electric1447)
+ * Copyright (C) 2015 Sergi Granell (xerpi)
+ * Copyright (C) 2021 Itai Levin (Electric1447)
  */
 
 #define _GNU_SOURCE char *strcasestr(const char *haystack, const char *needle);
 
-#include "popup.hpp"
+#include "installer.hpp"
 
 #include <iostream>
 #include <stdio.h>
@@ -21,12 +21,10 @@
 #include "../utils/vitaPackage.h"
 
 
-int state = IDLE;
-int install_state;
-bool isInstalling;
+int state = IDLE, install_state;
+bool isInstalling, launchUpdater = false;
 
-string d_url = "";
-string d_filename = "";
+string d_url = "", d_filename = "";
 int dl_type;
 string dl_dir;
 bool dl_isEasyVPK = false;
@@ -76,7 +74,6 @@ uint8_t quota(uint64_t len) {
 }
 
 static size_t write_cb(void *ptr, size_t size, size_t nmemb, void *stream) {
-	
 	if (abort_download)
 		return -1;
 	
@@ -170,14 +167,26 @@ void launchDownload(const char *url) {
 	
 	sceNetCtlInit();
 	sceHttpInit(NET_INIT_SIZE);
-	SceUID thd = sceKernelCreateThread("Net Downloader Thread", &downloadThread, 0x10000100, 0x100000, 0, 0, NULL);
-	sceKernelStartThread(thd, 0, NULL);
+	SceUID thid = sceKernelCreateThread("Net Downloader Thread", &downloadThread, 0x10000100, 0x100000, 0, 0, NULL);
+	sceKernelStartThread(thid, 0, NULL);
 	state = DOWNLOADING;
 }
 
-static int installThread(unsigned int args, void* arg){
+static int installThread(unsigned int args, void* arg) {
 	VitaPackage pkg = VitaPackage(std::string(dl_dir + d_filename));
 	install_state = pkg.Install();
+	isInstalling = false;
+	
+	sceKernelExitDeleteThread(0);
+	return 0;
+}
+
+static int updaterThread(unsigned int args, void* arg) {
+	UpdaterPackage().InstallUpdater();
+	UpdatePackage pkg = UpdatePackage(std::string(dl_dir + d_filename));
+	pkg.Extract();
+	pkg.MakeHeadBin();
+	launchUpdater = true;
 	isInstalling = false;
 	
 	sceKernelExitDeleteThread(0);
@@ -188,8 +197,12 @@ void launchInstaller() {
 	if (isInstalling)
 		return;
 	
-	SceUID thd = sceKernelCreateThread("Installer Thread", &installThread, 0x10000100, 0x100000, 0, 0, NULL);
-	sceKernelStartThread(thd, 0, NULL);
+	SceUID thid;
+	if (!dl_isEasyVPK)
+		thid = sceKernelCreateThread("Installer Thread", &installThread, 0x10000100, 0x100000, 0, 0, NULL);
+	else
+		thid = sceKernelCreateThread("Updater Thread", &updaterThread, 0x10000100, 0x100000, 0, 0, NULL);
+	sceKernelStartThread(thid, 0, NULL);
 	isInstalling = true;
 }
 
@@ -234,10 +247,10 @@ static int downloader_main(unsigned int args, void* arg) {
 		
 		sceCtrlPeekBufferPositive(0, &pad, 1);
 
-		if ((pad.buttons & SCE_CTRL_CROSS) && (state >= FINISHED) && (dl_type == VPK) && (!install_state) && (!dl_isEasyVPK))
+		if ((pad.buttons & SCE_CTRL_CROSS) && (state >= FINISHED) && (dl_type == VPK) && (!install_state))
 			launchInstaller();
 		
-		if ((pad.buttons & SCE_CTRL_CIRCLE) && (state >= FINISHED))
+		if (((pad.buttons & SCE_CTRL_CIRCLE) && (state >= FINISHED)) || launchUpdater)
 			break;
 
 		vita2d_start_drawing();
@@ -254,7 +267,7 @@ static int downloader_main(unsigned int args, void* arg) {
 		
 		if (state > DOWNLOADING) {
 			if (state >= FINISHED)
-				vita2d_pgf_draw_textf(pgf, 20, 400, WHITE, 1.0f, "%s\nPress O to exit.", (install_state || dl_type || dl_isEasyVPK) ? "Finished!" : "Press X to install. (May take several minutes)");
+				vita2d_pgf_draw_textf(pgf, 20, 400, WHITE, 1.0f, "%s\nPress O to exit.", (install_state || dl_type) ? "Finished!" : (dl_isEasyVPK ? "Press X to update." : "Press X to install. (May take several minutes)"));
 			
 			if (state < MISSING)
 				vita2d_pgf_draw_textf(pgf, 20, 200, GREEN, 1.0f, "Files downloaded successfully! (%.2f %s)", format(downloaded_bytes), sizes[quota(downloaded_bytes)]);
@@ -353,11 +366,11 @@ static int downloader_main(unsigned int args, void* arg) {
 	return 0;
 }
 
-void Popup::draw(SharedData &sharedData) {
+void Installer::draw(SharedData &sharedData) {
 	reset();
 	
 	dl_type = sharedData.dl_type_sd;
-	dl_isEasyVPK = sharedData.vpks[sharedData.cursorY]["titleid"].get<string>() == "ESVPK0009";
+	dl_isEasyVPK = sharedData.vpks[sharedData.cursorY]["titleid"].get<string>() == VITA_TITLEID;
 	
 	switch (dl_type) {
 		case VPK:
@@ -387,10 +400,13 @@ void Popup::draw(SharedData &sharedData) {
 		sceKernelWaitThreadEnd(main_thread, NULL, NULL);
 	}
 	
+	if (launchUpdater)
+		openApp(UPDATER_TITLEID);
+	
 	sharedData.scene = 1;
 }
 
-string Popup::getDataFileName(const string& s) {
+string Installer::getDataFileName(const string& s) {
 	char sep = '/';
 
 	size_t i = s.rfind(sep, s.length());
@@ -400,7 +416,7 @@ string Popup::getDataFileName(const string& s) {
 	return ("");
 }
 
-void Popup::reset() {
+void Installer::reset() {
 	state = IDLE;
 	downloaded_bytes = 0;
 	extracted_bytes = 0;

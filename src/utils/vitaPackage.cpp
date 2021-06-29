@@ -8,12 +8,24 @@
 #include <psp2/io/fcntl.h>
 #include <psp2/io/stat.h>
 #include <psp2/kernel/threadmgr.h>
+#include <psp2/kernel/processmgr.h>
 #include <psp2/promoterutil.h>
 #include <psp2/sysmodule.h>
 
 #include "filesystem.hpp"
 #include "sha1.h"
 #include "zip.h"
+
+
+#define UPDATER_SRC_EBOOT_PATH "ux0:app/ESVPK0009/resources/updater/eboot.bin"
+#define UPDATER_SRC_SFO_PATH "ux0:app/ESVPK0009/resources/updater/param.sfo"
+
+#define UPDATER_DST_EBOOT_PATH PACKAGE_TEMP_FOLDER "eboot.bin"
+#define UPDATER_DST_SFO_DIR PACKAGE_TEMP_FOLDER "sce_sys/"
+#define UPDATER_DST_SFO_PATH PACKAGE_TEMP_FOLDER "sce_sys/param.sfo"
+
+#define ntohl __builtin_bswap32
+#define SFO_MAGIC 0x46535000
 
 
 extern unsigned char _binary_assets_head_bin_start;
@@ -198,7 +210,6 @@ int makeHeadBin() {
 }
 
 VitaPackage::VitaPackage(const std::string vpk) : vpk_(vpk) {
-
 	SceSysmoduleOpt opt;
 	opt.flags = 0;
 	opt.result = (int *)&opt.flags;
@@ -216,7 +227,7 @@ VitaPackage::~VitaPackage() {
 
 void VitaPackage::Extract() {
 
-	int ret = Filesystem::removePath(std::string(PACKAGE_TEMP_FOLDER));
+	Filesystem::removePath(std::string(PACKAGE_TEMP_FOLDER));
 
 	sceIoMkdir(PACKAGE_TEMP_FOLDER, 0777);
 
@@ -260,10 +271,37 @@ int VitaPackage::Install() {
 	return InstallExtracted();
 }
 
+int UpdaterPackage::InstallUpdater() {
+	
+	Filesystem::removePath(std::string(PACKAGE_TEMP_FOLDER));
+	
+	Filesystem::mkDir(std::string(PACKAGE_TEMP_FOLDER));
+	Filesystem::mkDir(std::string(UPDATER_DST_SFO_DIR));
+	
+	Filesystem::copyFile(std::string(UPDATER_SRC_EBOOT_PATH), std::string(UPDATER_DST_EBOOT_PATH));
+	Filesystem::copyFile(std::string(UPDATER_SRC_SFO_PATH), std::string(UPDATER_DST_SFO_PATH));
+
+	return InstallExtracted();
+}
+
 void UpdatePackage::MakeHeadBin() {
 	int ret = makeHeadBin();
 	if (ret < 0)
 		throw std::runtime_error("Error faking app signature");
+}
+
+bool InstalledVitaPackage::IsInstalled() {
+    int res;
+    int ret = scePromoterUtilityCheckExist(title_id.c_str(), &res);
+    if (res < 0)
+        return false;
+		
+    return ret >= 0;
+}
+
+int InstalledVitaPackage::Uninstall() {
+	sceAppMgrDestroyOtherApp();
+	return scePromoterUtilityDeletePkg(title_id.c_str());
 }
 
 bool isPackageInstalled(std::string titleid) {
@@ -295,4 +333,5 @@ void openApp(std::string titleid) {
 	snprintf(uri, sizeof(uri), "psgm:play?titleid=%s", titleid.c_str());
 
 	sceAppMgrLaunchAppByUri(0x20000, uri);
+	sceKernelExitProcess(0);
 }
