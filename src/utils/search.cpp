@@ -132,6 +132,21 @@ json filterJson(string filter, json original) {
 	return ret;
 }
 
+json moveToTopJson(string titleid, json original) {
+	json ret, fout;
+	int arrayLength = static_cast<int>(original.size());
+	
+	for (int i = 0; i < arrayLength; i++)
+		if (original[i]["titleid"].get<string>() == titleid)
+			ret.push_back(original[i]);
+		else fout.push_back(original[i]);
+		
+	for (int i = 0; i < arrayLength - 1; i++)
+		ret.push_back(fout[i]);
+	
+	return ret;
+}
+
 string toLowercase(string strToConvert) {
 	transform(strToConvert.begin(), strToConvert.end(), strToConvert.begin(), ::tolower);
 	return strToConvert;

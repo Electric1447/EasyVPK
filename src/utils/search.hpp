@@ -19,5 +19,6 @@ int isImeDialogRunning();
 int updateImeDialog();
 
 json filterJson(string filter, json original);
+json moveToTopJson(string titleid, json original);
 
 string toLowercase(string strToConvert);

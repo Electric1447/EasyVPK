@@ -64,7 +64,7 @@ int main() {
 	netInit();
 	curlDownload(HOMEBREW_URL, "ux0:data/Easy_VPK/vpks.json");
 	
-	sharedData.vpks = json::parse(Filesystem::readFile("ux0:data/Easy_VPK/vpks.json"));
+	sharedData.vpks = moveToTopJson(VITA_TITLEID, json::parse(Filesystem::readFile("ux0:data/Easy_VPK/vpks.json")));
 	sharedData.original = sharedData.vpks;
 
 	List listView;
