@@ -393,12 +393,16 @@ void Installer::draw(SharedData &sharedData) {
 		sharedData.scene = 1;
 		return;
 	}
-			
+	
+    sceShellUtilLock(SCE_SHELL_UTIL_LOCK_TYPE_PS_BTN); // Lock PS button
+	
 	SceUID main_thread = sceKernelCreateThread("main_downloader", downloader_main, 0x40, 0x1000000, 0, 0, NULL);
 	if (main_thread >= 0){
 		sceKernelStartThread(main_thread, 0, NULL);
 		sceKernelWaitThreadEnd(main_thread, NULL, NULL);
 	}
+	
+	sceShellUtilUnlock(SCE_SHELL_UTIL_LOCK_TYPE_PS_BTN); // Unlock PS button
 	
 	if (launchUpdater)
 		openApp(UPDATER_TITLEID);

@@ -15,7 +15,7 @@ include("${VITASDK}/share/vita.cmake" REQUIRED)
 set(VITA_APP_NAME "EasyVPK")
 set(VITA_TITLEID  "ESVPK0009")
 set(UPDATER_TITLEID "ESUPD0009")
-set(VITA_VERSION  "02.00")
+set(VITA_VERSION  "02.01")
 
 
 set(PACKAGE_TEMP_FOLDER "ux0:/temp/pkg/")

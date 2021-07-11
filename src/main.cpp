@@ -7,18 +7,17 @@
 #include <psp2/ime_dialog.h>
 #include <psp2/appmgr.h>
 #include <psp2/promoterutil.h>
+#include <psp2/shellutil.h> 
 
 #include "net/download.hpp"
 #include "utils/filesystem.hpp"
+#include "utils/nosleep_thread.h"
 #include "utils/search.hpp"
 #include "utils/vitaPackage.h"
 
 #include "screens/list.hpp"
 #include "screens/details.hpp"
 #include "screens/installer.hpp"
-
-
-SceCtrlData pad;
 
 
 void initSceAppUtil() {
@@ -40,6 +39,8 @@ void initSceAppUtil() {
 
 int main() {
 	initSceAppUtil();
+	sceShellUtilInitEvents(0); // Init SceShellUtil events
+	StartNoSleepThread(); // Sleep invalidates file descriptors
 	
     // remove updater app if installed
     { // extra scope needed to cause VitaPackage cleanup procedure
@@ -71,6 +72,8 @@ int main() {
 	Installer installerView;
 	Details detailsView;
 
+	SceCtrlData pad;
+
 	while(1) {
 		sceCtrlPeekBufferPositive(0, &pad, 1);
 		vita2d_start_drawing();
@@ -94,6 +97,8 @@ int main() {
 
 		if (pad.buttons == SCE_CTRL_SELECT || sharedData.scene == -1)
 			break;
+		
+		sceShellUtilLock(SCE_SHELL_UTIL_LOCK_TYPE_USB_CONNECTION); // Prevent automatic CMA connection
 	}
 
 	httpTerm();
