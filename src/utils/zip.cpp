@@ -1,11 +1,12 @@
 #include "zip.h"
 
 #include <psp2/io/stat.h>
-#include <stdexcept>
+
 
 #define dir_delimter '/'
 #define MAX_FILENAME 512
 #define READ_SIZE 8192
+
 
 static void mkdir_rec(const char* dir) {
 	
@@ -29,19 +30,19 @@ static void mkdir_rec(const char* dir) {
 	sceIoMkdir(tmp, 0777);
 }
 
-std::string dirnameOf(const std::string& fname) {
+string dirnameOf(const string& fname) {
 	size_t pos = fname.find_last_of("\\/");
-	return (std::string::npos == pos) ? "" : fname.substr(0, pos);
+	return (string::npos == pos) ? "" : fname.substr(0, pos);
 }
 
-Zipfile::Zipfile(const std::string zip_path) {
+Zipfile::Zipfile(const string zip_path) {
 	
 	zipfile_ = unzOpen(zip_path.c_str());
 	if (!zipfile_)
-		throw std::runtime_error("Cannot open zip");
+		throw runtime_error("Cannot open zip");
 
 	if (unzGetGlobalInfo(zipfile_, &global_info_) != UNZ_OK)
-		throw std::runtime_error("Cannot read zip info");
+		throw runtime_error("Cannot read zip info");
 }
 
 Zipfile::~Zipfile() {
@@ -49,7 +50,7 @@ Zipfile::~Zipfile() {
 		unzClose(zipfile_);
 }
 
-int Zipfile::Unzip(const std::string outpath) {
+int Zipfile::Unzip(const string outpath) {
 	
 	if (uncompressed_size_ == 0)
 		UncompressedSize();
@@ -58,7 +59,7 @@ int Zipfile::Unzip(const std::string outpath) {
 
 	uLong i;
 	if (unzGoToFirstFile(zipfile_) != UNZ_OK)
-		throw std::runtime_error("Error going to first file");
+		throw runtime_error("Error going to first file");
 
 	for (i = 0; i < global_info_.number_entry; ++i) {
 		
@@ -66,7 +67,7 @@ int Zipfile::Unzip(const std::string outpath) {
 		char filename[MAX_FILENAME];
 		char fullfilepath[MAX_FILENAME];
 		if (unzGetCurrentFileInfo(zipfile_, &file_info, filename, MAX_FILENAME, nullptr, 0, nullptr, 0) != UNZ_OK)
-			throw std::runtime_error("Error reading zip file info");
+			throw runtime_error("Error reading zip file info");
 
 		sprintf(fullfilepath, "%s%s", outpath.c_str(), filename);
 
@@ -76,18 +77,18 @@ int Zipfile::Unzip(const std::string outpath) {
 			mkdir_rec(fullfilepath);
 		} else {
 			// Create the dir where the file will be placed
-			std::string destdir = dirnameOf(std::string(fullfilepath));
+			string destdir = dirnameOf(string(fullfilepath));
 			mkdir_rec(destdir.c_str());
 
 			// Entry is a file, so extract it.
 			if (unzOpenCurrentFile(zipfile_) != UNZ_OK)
-				throw std::runtime_error("Cannot open file from zip");
+				throw runtime_error("Cannot open file from zip");
 
 			// Open a file to write out the data.
 			FILE* out = fopen(fullfilepath, "wb");
 			if (out == nullptr) {
 				unzCloseCurrentFile(zipfile_);
-				throw std::runtime_error("Cannot open destination file");
+				throw runtime_error("Cannot open destination file");
 			}
 
 			int error;
@@ -95,7 +96,7 @@ int Zipfile::Unzip(const std::string outpath) {
 				error = unzReadCurrentFile(zipfile_, read_buffer, READ_SIZE);
 				if (error < 0) {
 					unzCloseCurrentFile(zipfile_);
-					throw std::runtime_error("Cannot read current zip file");
+					throw runtime_error("Cannot read current zip file");
 				}
 
 				if (error > 0)
@@ -111,7 +112,7 @@ int Zipfile::Unzip(const std::string outpath) {
 		// Go the the next entry listed in the zip file.
 		if ((i + 1) < global_info_.number_entry)
 			if (unzGoToNextFile(zipfile_) != UNZ_OK)
-				throw std::runtime_error("Error getting next zip file");
+				throw runtime_error("Error getting next zip file");
 	}
 
 	return 0;
@@ -122,7 +123,7 @@ int Zipfile::UncompressedSize() {
 	uncompressed_size_ = 0;
 
 	if (unzGoToFirstFile(zipfile_) != UNZ_OK)
-		throw std::runtime_error("Error going to first file");
+		throw runtime_error("Error going to first file");
 
 	uLong i;
 	for (i = 0; i < global_info_.number_entry; ++i) {
@@ -130,14 +131,14 @@ int Zipfile::UncompressedSize() {
 		unz_file_info file_info;
 		char filename[MAX_FILENAME];
 		if (unzGetCurrentFileInfo(zipfile_, &file_info, filename, MAX_FILENAME, nullptr, 0, nullptr, 0) != UNZ_OK)
-			throw std::runtime_error("Error reading zip file info");
+			throw runtime_error("Error reading zip file info");
 
 		uncompressed_size_ += file_info.uncompressed_size;
 
 		// Go the the next entry listed in the zip file.
 		if ((i + 1) < global_info_.number_entry)
 			if (unzGoToNextFile(zipfile_) != UNZ_OK)
-				throw std::runtime_error("Error calculating zip size");
+				throw runtime_error("Error calculating zip size");
 	}
 
 	return 0;

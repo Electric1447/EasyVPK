@@ -1,16 +1,17 @@
+#include "filesystem.hpp"
+
+#include <psp2/kernel/clib.h>
+
 #include <malloc.h>
 #include <stdio.h>
 #include <string.h>
-#include <string>
 
-#include "psp2/kernel/clib.h"
-#include "filesystem.hpp"
 
-bool hasEndSlash(std::string str) {
-	std::string slash = "/";
+bool hasEndSlash(string str) {
+	string slash = "/";
 
 	if (slash.size() > slash.size()) return false;
-	return std::equal(slash.rbegin(), slash.rend(), str.rbegin());
+	return equal(slash.rbegin(), slash.rend(), str.rbegin());
 }
 
 int doesDirExist(const char* path) { 
@@ -23,14 +24,14 @@ int doesDirExist(const char* path) {
  	} 
 } 
 
-int Filesystem::mkDir(std::string path) {
+int Filesystem::mkDir(string path) {
 	if (!doesDirExist(path.c_str()))
 		sceIoMkdir(path.c_str(), 0777);
 	
 	return 0;
 }
 
-std::string Filesystem::readFile(std::string file) {
+string Filesystem::readFile(string file) {
 	int fd = sceIoOpen(file.c_str(), SCE_O_RDONLY, 0777);
 
 	int fileSize = sceIoLseek ( fd, 0, SCE_SEEK_END );
@@ -39,7 +40,7 @@ std::string Filesystem::readFile(std::string file) {
 	if (fd < 0)
 		return "";
 
-	std::string readString(fileSize, '\0');
+	string readString(fileSize, '\0');
 	sceIoRead(fd, &readString[0], fileSize);
 
 	sceIoClose(fd);
@@ -47,7 +48,7 @@ std::string Filesystem::readFile(std::string file) {
 	return readString;
 }
 
-bool Filesystem::fileExists(std::string path) {
+bool Filesystem::fileExists(string path) {
 	if (int fd = sceIoOpen(path.c_str(), SCE_O_RDONLY, 0777)) {
 		sceIoClose(fd);
 		return true;
@@ -56,7 +57,7 @@ bool Filesystem::fileExists(std::string path) {
 	}
 }
 
-int Filesystem::writeFile(std::string file, std::string buf) {
+int Filesystem::writeFile(string file, string buf) {
 	int fd = sceIoOpen(file.c_str(), SCE_O_WRONLY | SCE_O_CREAT | SCE_O_TRUNC, 0777);
 
 	if (fd < 0)
@@ -68,7 +69,7 @@ int Filesystem::writeFile(std::string file, std::string buf) {
 	return written;
 }
 
-int Filesystem::copyFile(std::string src, std::string dst) {
+int Filesystem::copyFile(string src, string dst) {
 
 	// The destination is a subfolder of the source folder
 	SceUID fdsrc = sceIoOpen(src.c_str(), SCE_O_RDONLY, 0);
@@ -128,7 +129,7 @@ int Filesystem::copyFile(std::string src, std::string dst) {
 	return 1;
 }
 
-int Filesystem::copyPath(std::string src, std::string dst) {
+int Filesystem::copyPath(string src, string dst) {
 
 	SceUID dfd = sceIoDopen(src.c_str());
 	if (dfd >= 0) {
@@ -186,7 +187,7 @@ int Filesystem::copyPath(std::string src, std::string dst) {
 	return 1;
 }
 
-int Filesystem::removePath(std::string path) {
+int Filesystem::removePath(string path) {
 	SceUID dfd = sceIoDopen(path.c_str());
 	if (dfd < 0)
 		return dfd;
@@ -194,7 +195,7 @@ int Filesystem::removePath(std::string path) {
 	SceIoDirent dir;
 	memset(&dir, 0, sizeof(SceIoDirent));
 	while (sceIoDread(dfd, &dir) > 0) {
-		std::string newString = path + (hasEndSlash(path) ? "" : "/") + dir.d_name;
+		string newString = path + (hasEndSlash(path) ? "" : "/") + dir.d_name;
 
 		if (SCE_S_ISDIR(dir.d_stat.st_mode)) {
 			Filesystem::removePath(newString);

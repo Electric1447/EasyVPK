@@ -1,17 +1,22 @@
 #pragma once
 
 #include <stdio.h>
-#include <string>
 #include <string.h>
+#include <string>
+#include <stdexcept>
 
 #include "minizip/unzip.h"
 
+
+using namespace std;
+
+
 class Zipfile {
 public:
-	Zipfile(const std::string zip_path);
+	Zipfile(const string zip_path);
 	~Zipfile();
 
-	int Unzip(const std::string outpath);
+	int Unzip(const string outpath);
 	int UncompressedSize();
 
 private:

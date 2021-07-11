@@ -1,14 +1,9 @@
-#include <algorithm>
+#include "search.hpp"
 
 #include <psp2/sysmodule.h>
-#include <psp2/ime_dialog.h>
-#include <string>
 
-#include "search.hpp"
-#include "json.hpp"
+#include <algorithm>
 
-using json = nlohmann::json;
-using namespace std;
 
 static int ime_dialog_running = 0;
 

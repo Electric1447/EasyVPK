@@ -1,7 +1,6 @@
 /*
  * Originally created by devnoname120 (https://github.com/devnoname120)
  */
-
 #include "vitaPackage.h"
 
 #include <psp2/appmgr.h>
@@ -209,7 +208,7 @@ int makeHeadBin() {
 	return 0;
 }
 
-VitaPackage::VitaPackage(const std::string vpk) : vpk_(vpk) {
+VitaPackage::VitaPackage(const string vpk) : vpk_(vpk) {
 	SceSysmoduleOpt opt;
 	opt.flags = 0;
 	opt.result = (int *)&opt.flags;
@@ -227,13 +226,13 @@ VitaPackage::~VitaPackage() {
 
 void VitaPackage::Extract() {
 
-	Filesystem::removePath(std::string(PACKAGE_TEMP_FOLDER));
+	Filesystem::removePath(string(PACKAGE_TEMP_FOLDER));
 
 	sceIoMkdir(PACKAGE_TEMP_FOLDER, 0777);
 
 	Zipfile vpk_file = Zipfile(vpk_);
 
-	vpk_file.Unzip(std::string(PACKAGE_TEMP_FOLDER));
+	vpk_file.Unzip(string(PACKAGE_TEMP_FOLDER));
 	sceIoRemove(vpk_.c_str());
 }
 
@@ -241,17 +240,17 @@ int VitaPackage::InstallExtracted() {
 
 	int ret = makeHeadBin();
 	if (ret < 0)
-		throw std::runtime_error("Error faking app signature");
+		throw runtime_error("Error faking app signature");
 
 	ret = scePromoterUtilityPromotePkg(PACKAGE_TEMP_FOLDER, 0);
 	if (ret < 0)
-		throw std::runtime_error("Error installing app");
+		throw runtime_error("Error installing app");
 
 	int state = 0;
 	do {
 		ret = scePromoterUtilityGetState(&state);
 		if (ret < 0)
-			throw std::runtime_error("Error while instaling");
+			throw runtime_error("Error while instaling");
 
 		sceKernelDelayThread(150 * 1000);
 	} while (state);
@@ -259,9 +258,9 @@ int VitaPackage::InstallExtracted() {
 	int result = 0;
 	ret = scePromoterUtilityGetResult(&result);
 	if (ret < 0)
-		throw std::runtime_error("Installation failed");
+		throw runtime_error("Installation failed");
 
-	Filesystem::removePath(std::string(PACKAGE_TEMP_FOLDER));
+	Filesystem::removePath(string(PACKAGE_TEMP_FOLDER));
 
 	return 1;
 }
@@ -273,13 +272,13 @@ int VitaPackage::Install() {
 
 int UpdaterPackage::InstallUpdater() {
 	
-	Filesystem::removePath(std::string(PACKAGE_TEMP_FOLDER));
+	Filesystem::removePath(string(PACKAGE_TEMP_FOLDER));
 	
-	Filesystem::mkDir(std::string(PACKAGE_TEMP_FOLDER));
-	Filesystem::mkDir(std::string(UPDATER_DST_SFO_DIR));
+	Filesystem::mkDir(string(PACKAGE_TEMP_FOLDER));
+	Filesystem::mkDir(string(UPDATER_DST_SFO_DIR));
 	
-	Filesystem::copyFile(std::string(UPDATER_SRC_EBOOT_PATH), std::string(UPDATER_DST_EBOOT_PATH));
-	Filesystem::copyFile(std::string(UPDATER_SRC_SFO_PATH), std::string(UPDATER_DST_SFO_PATH));
+	Filesystem::copyFile(string(UPDATER_SRC_EBOOT_PATH), string(UPDATER_DST_EBOOT_PATH));
+	Filesystem::copyFile(string(UPDATER_SRC_SFO_PATH), string(UPDATER_DST_SFO_PATH));
 
 	return InstallExtracted();
 }
@@ -287,7 +286,7 @@ int UpdaterPackage::InstallUpdater() {
 void UpdatePackage::MakeHeadBin() {
 	int ret = makeHeadBin();
 	if (ret < 0)
-		throw std::runtime_error("Error faking app signature");
+		throw runtime_error("Error faking app signature");
 }
 
 bool InstalledVitaPackage::IsInstalled() {
@@ -304,7 +303,7 @@ int InstalledVitaPackage::Uninstall() {
 	return scePromoterUtilityDeletePkg(title_id.c_str());
 }
 
-bool isPackageInstalled(std::string titleid) {
+bool isPackageInstalled(string titleid) {
 	// FIXME Don't reload the module every time
 
 	// ScePaf is required for PromoterUtil
@@ -318,7 +317,7 @@ bool isPackageInstalled(std::string titleid) {
 
 	int ret = scePromoterUtilityInit();
 	if (ret < 0)
-		throw std::runtime_error("scePromoterUtilityInit() = " + ret);
+		throw runtime_error("scePromoterUtilityInit() = " + ret);
 
 	int res;
 	int installed = scePromoterUtilityCheckExist(titleid.c_str(), &res);
@@ -328,7 +327,7 @@ bool isPackageInstalled(std::string titleid) {
 	return installed >= 0;
 }
 
-void openApp(std::string titleid) {
+void openApp(string titleid) {
 	char uri[32];
 	snprintf(uri, sizeof(uri), "psgm:play?titleid=%s", titleid.c_str());
 
